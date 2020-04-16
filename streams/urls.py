@@ -11,4 +11,5 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('accounts/', include('streams.apps.accounts.urls')),
     path('profiles/', include('streams.apps.profiles.urls')),
+    path('posts/', include('streams.apps.posts.urls')),
 ]

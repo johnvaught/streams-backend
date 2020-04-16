@@ -41,10 +41,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
+    'django_extensions',
 
     'streams.apps.core',
     'streams.apps.accounts',
     'streams.apps.profiles',
+    'streams.apps.posts',
 ]
 
 MIDDLEWARE = [

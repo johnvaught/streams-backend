@@ -101,6 +101,7 @@ class Account(AbstractBaseUser, PermissionsMixin, TimestampedModel):
 
     def set_inactive(self):
         self.is_active = False
+        Account.posts.is_active = False
         self.save()
 
 

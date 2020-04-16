@@ -10,14 +10,14 @@ from .models import Profile
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def read_profile(request):
-    profile = ProfileSerializer(request.user)
+    profile = ProfileSerializer(request.user.profile)
     return Response(profile.data)
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def update_profile(request):
-    serializer = ProfileSerializer(request.user, data=request.data, partial=True)
+    serializer = ProfileSerializer(request.user.profile, data=request.data, partial=True)
     serializer.is_valid(raise_exception=True)
     print(serializer.validated_data)
     serializer.save()

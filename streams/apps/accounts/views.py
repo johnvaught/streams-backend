@@ -3,6 +3,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import Response
 from rest_framework import status
 from .serializers import AccountSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 @api_view(['POST'])
@@ -10,8 +11,16 @@ from .serializers import AccountSerializer
 def create_account(request):
     serializer = AccountSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    serializer.save()
-    return Response(serializer.data, status=status.HTTP_201_CREATED)
+    account = serializer.save()
+
+    refresh = RefreshToken.for_user(account)
+    tokens = {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }
+
+    data = {'account': serializer.data, 'tokens': tokens}
+    return Response(data, status=status.HTTP_201_CREATED)
 
 
 @api_view(['GET'])
@@ -35,4 +44,4 @@ def update_account(request):
 @permission_classes([IsAuthenticated])
 def delete_account(request):
     request.user.set_inactive()
-    return Response({'Account deleted.'}, status=status.HTTP_204_NO_CONTENT)
+    return Response({'Deleted': f'{request.user}'}, status=status.HTTP_204_NO_CONTENT)

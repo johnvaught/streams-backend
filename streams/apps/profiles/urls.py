@@ -10,4 +10,3 @@ urlpatterns = [
     path('update/', update_profile, name='update_profile'),
     path('public/<str:handle>/', read_public_profile, name='read_public_profile'),
 ]
-
