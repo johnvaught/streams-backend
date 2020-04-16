@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     'streams.apps.accounts',
     'streams.apps.profiles',
     'streams.apps.posts',
+    'streams.apps.streams',
+    'streams.apps.follows',
 ]
 
 MIDDLEWARE = [

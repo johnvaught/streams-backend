@@ -11,8 +11,7 @@ from .serializers import PostSerializer
 @permission_classes([IsAuthenticated])
 def create_post(request):
     serializer_context = {'account': request.user}
-    serializer_data = request.data
-    serializer = PostSerializer(data=serializer_data, context=serializer_context)
+    serializer = PostSerializer(data=request.data, context=serializer_context)
     serializer.is_valid(raise_exception=True)
     serializer.save()
     return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -56,6 +55,9 @@ def update_post(request, post_id):
     except Post.DoesNotExist:
         raise Http404
 
+    if post.account != request.user:
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
     serializer = PostSerializer(post, data=request.data, partial=True)
     serializer.is_valid(raise_exception=True)
     serializer.save()
@@ -69,6 +71,14 @@ def delete_post(request, post_id):
         post = Post.objects.get(id=post_id)
     except Post.DoesNotExist:
         raise Http404
+
+    """
+    Object level permissions classes not supported for function based views.
+    https://github.com/encode/django-rest-framework/issues/1697
+    Workaround below.
+    """
+    if post.account != request.user:
+        return Response(status=status.HTTP_403_FORBIDDEN)
 
     post.delete()
     return Response({'Deleted': f'{post}'}, status=status.HTTP_204_NO_CONTENT)

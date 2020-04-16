@@ -17,7 +17,7 @@ class Post(TimestampedModel):
     objects = PostManager()
 
     def __str__(self):
-        return f'{self.account.handle} - {self.caption[:20]}'
+        return f'{self.account.handle} : {self.caption[:20]}'
 
     def delete(self):
         self.is_deleted = True
