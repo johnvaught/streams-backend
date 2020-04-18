@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     'streams.apps.posts',
     'streams.apps.streams',
     'streams.apps.follows',
+    'streams.apps.likes',
+    'streams.apps.comments',
 ]
 
 MIDDLEWARE = [
@@ -145,7 +147,7 @@ REST_FRAMEWORK = {
 
 # Simple JWT
 SIMPLE_JWT = {
-    # MUST UPDATE LIFETIMES BEFORE DEPLOYMENT
+    # TODO: MUST UPDATE LIFETIMES BEFORE DEPLOYMENT
     'ACCESS_TOKEN_LIFETIME': timedelta(days=30),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=90),
     'ROTATE_REFRESH_TOKENS': False,

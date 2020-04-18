@@ -17,4 +17,6 @@ urlpatterns = [
     path('posts/', include('streams.apps.posts.urls')),
     path('streams/', include('streams.apps.streams.urls')),
     path('follows/', include('streams.apps.follows.urls')),
+    path('comments/', include('streams.apps.comments.urls')),
+    path('likes/', include('streams.apps.likes.urls')),
 ]

@@ -110,7 +110,6 @@ def delete_stream(request, stream_id):
 @permission_classes([AllowAny])
 def get_posts_for_stream(request, stream_id):
     since_date = request.query_params.get('since')
-    print(since_date)
     post_ids = Follow.objects.filter(stream__id=stream_id, stream_follows_account=True).values('account__posts')
     if since_date:
         posts = Post.objects.filter(id__in=post_ids, updated_at__gt=since_date)
