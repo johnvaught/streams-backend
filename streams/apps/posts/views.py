@@ -41,8 +41,8 @@ def read_public_posts_for(request, handle):
         posts = Post.objects.filter(account__handle=handle, created_at__gt=since_date)
     else:
         posts = Post.objects.filter(account__handle=handle)
-    if not posts:
-        raise Http404
+    # if not posts:
+    #     raise Http404
     serializer = PostSerializer(posts, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -80,5 +80,5 @@ def delete_post(request, post_id):
     if post.account != request.user:
         return Response(status=status.HTTP_403_FORBIDDEN)
 
-    post.delete()
+    post.set_deleted()
     return Response({'Deleted': f'{post}'}, status=status.HTTP_204_NO_CONTENT)

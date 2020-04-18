@@ -5,6 +5,9 @@ from rest_framework import status
 from rest_framework.response import Response
 from .serializers import StreamSerializer
 from .models import Stream
+from streams.apps.follows.models import Follow
+from streams.apps.posts.models import Post
+from streams.apps.posts.serializers import PostSerializer
 
 
 @api_view(['POST'])
@@ -99,5 +102,19 @@ def delete_stream(request, stream_id):
     if stream.owner != request.user:
         return Response(status=status.HTTP_403_FORBIDDEN)
 
-    stream.delete()
+    stream.set_deleted()
     return Response({'Deleted': f'{stream}'}, status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_posts_for_stream(request, stream_id):
+    since_date = request.query_params.get('since')
+    print(since_date)
+    post_ids = Follow.objects.filter(stream__id=stream_id, stream_follows_account=True).values('account__posts')
+    if since_date:
+        posts = Post.objects.filter(id__in=post_ids, updated_at__gt=since_date)
+    else:
+        posts = Post.objects.filter(id__in=post_ids)
+    serializer = PostSerializer(posts, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)

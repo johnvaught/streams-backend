@@ -6,7 +6,8 @@ from .views import \
     read_streams, \
     read_public_streams_for, \
     read_stream, \
-    read_public_stream
+    read_public_stream, \
+    get_posts_for_stream
 
 urlpatterns = [
     path('create/', create_stream, name='create_stream'),
@@ -16,5 +17,6 @@ urlpatterns = [
     path('read/<int:stream_id>/', read_stream, name='read_stream'),
     path('update/<int:stream_id>/', update_stream, name='update_stream'),
     path('delete/<int:stream_id>/', delete_stream, name='delete_stream'),
+    path('posts/stream:<int:stream_id>/', get_posts_for_stream, name='get_posts_for_stream')
 ]
 

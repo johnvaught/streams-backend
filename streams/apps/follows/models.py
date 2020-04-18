@@ -7,7 +7,11 @@ from django.utils.translation import gettext_lazy as _
 
 class FollowManager(models.Manager):
     def get_queryset(self):
-        return super(FollowManager, self).get_queryset().filter(followed=True)\
+        """
+        Only query accounts and streams that have not been `deleted`.
+        """
+        # TODO: There's no way I'm using select_related correctly.
+        return super(FollowManager, self).get_queryset()\
             .select_related('account').filter(account__is_active=True)\
             .select_related('stream').filter(stream__is_deleted=False)
 
@@ -24,6 +28,15 @@ class Follow(TimestampedModel):
 
     objects = FollowManager()
 
+    class Meta:
+        """
+        A stream cannot follow an account multiple times, and vice versa.
+        """
+        unique_together = ('account', 'stream', 'stream_follows_account')
+
+    def __str__(self):
+        return f'account:{self.account.handle} :: stream owner:{self.stream.owner}, stream:{self.stream.name}'
+
     def clean(self):
         """
         A stream may not follow their creator to avoid creating false followers.
@@ -33,10 +46,20 @@ class Follow(TimestampedModel):
         For more info on clean()
         https://docs.djangoproject.com/en/3.0/ref/models/instances/#django.db.models.Model.clean
         https://stackoverflow.com/questions/4441539/why-doesnt-djangos-model-save-call-full-clean
-        # TODO: Calling is_validated() from the serializer does call clean()?
+        # TODO: Is clean called from Serializer.is_validated?
         """
         if self.stream.account == self.account:
-            raise ValidationError({'error': _('You may not follow your own account.')})
+            # TODO: Remove testing print
+            print('TESTING: Validation error called from Follows.clean')
+            raise ValidationError({'error': _('You may not follow your own account or stream.')})
 
-    def __str__(self):
-        return f'{self.account.handle} : {self.stream.name}'
+    def set_deleted(self):
+        self.is_deleted = True
+        self.save()
+
+    def save(self, *args, **kwargs):
+        if self.account == self.stream.owner:
+            # TODO: Remove testing print
+            print('TESTING: Validation error called from Follows.save')
+            raise Exception(_('You may not follow your own account or stream.'))
+        super(Follow, self).save(*args, **kwargs)

@@ -19,6 +19,6 @@ class Post(TimestampedModel):
     def __str__(self):
         return f'{self.account.handle} : {self.caption[:20]}'
 
-    def delete(self):
+    def set_deleted(self):
         self.is_deleted = True
         self.save()
