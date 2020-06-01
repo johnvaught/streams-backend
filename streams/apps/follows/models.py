@@ -12,8 +12,7 @@ class FollowManager(models.Manager):
         """
         # TODO: There's no way I'm using select_related correctly.
         return super(FollowManager, self).get_queryset()\
-            .select_related('account').filter(account__is_active=True)\
-            .select_related('stream').filter(stream__is_deleted=False)
+            .select_related('account', 'stream').filter(account__is_active=True, stream__is_deleted=False)
 
 
 class Follow(TimestampedModel):

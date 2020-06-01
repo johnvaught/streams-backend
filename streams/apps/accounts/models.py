@@ -59,6 +59,7 @@ class Account(AbstractBaseUser, PermissionsMixin, TimestampedModel):
             'unique': _("A user with that handle already exists."),
         }, )
     email = models.EmailField(_('email address'), max_length=128, blank=True)
+    phone = models.CharField(_('phone number'), max_length=28, blank=True)
     is_staff = models.BooleanField(
         _('staff status'),
         default=False,

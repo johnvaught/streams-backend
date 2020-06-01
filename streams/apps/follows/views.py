@@ -10,6 +10,7 @@ from streams.apps.accounts.serializers import AccountSerializer
 from streams.apps.accounts.models import Account
 from streams.apps.profiles.models import Profile
 from streams.apps.profiles.serializers import ProfileSerializer
+from streams.apps.streams.models import Stream
 
 
 @api_view(['GET'])
@@ -143,3 +144,5 @@ def get_accounts_following_account(request, handle):
     profiles = Profile.objects.filter(id__in=profile_ids).distinct()
     serializer = ProfileSerializer(profiles, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+
