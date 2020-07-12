@@ -5,6 +5,8 @@ from rest_framework.views import Response
 from rest_framework import status
 from .models import Post
 from .serializers import PostSerializer
+from rest_framework.pagination import PageNumberPagination
+
 
 
 @api_view(['POST'])
@@ -90,3 +92,36 @@ def get_posts(request):
     posts = Post.objects.filter(account__handle=request.user.handle)
     serializer = PostSerializer(posts, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def get_my_posts(request):
+    print('called')
+    posts = Post.objects.filter(account__handle=request.user.handle)
+    print('here')
+
+    paginator = PageNumberPagination()
+    paginator.page_size = 3
+    result_page = paginator.paginate_queryset(posts, request)
+
+    serializer = PostSerializer(result_page, many=True)
+    return paginator.get_paginated_response(serializer.data)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def get_posts_for_account(request):
+    try:
+        account_id = request.data['account_id']
+    except KeyError:
+        return Response({'details': {'required fields': ['account_id']}}, status=status.HTTP_400_BAD_REQUEST)
+
+    posts = Post.objects.filter(account=account_id)
+
+    paginator = PageNumberPagination()
+    paginator.page_size = 12
+    result_page = paginator.paginate_queryset(posts, request)
+
+    serializer = PostSerializer(result_page, many=True)
+    return paginator.get_paginated_response(serializer.data)

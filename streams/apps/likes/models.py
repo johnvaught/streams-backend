@@ -12,8 +12,8 @@ class LikeManager(models.Manager):
 
 class Like(TimestampedModel):
     account = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.CASCADE)
-    post = models.ForeignKey('posts.Post', on_delete=models.CASCADE, null=True)
-    comment = models.ForeignKey('comments.Comment', on_delete=models.CASCADE, null=True)
+    post = models.ForeignKey('posts.Post', on_delete=models.CASCADE, null=True, db_index=True)
+    comment = models.ForeignKey('comments.Comment', on_delete=models.CASCADE, null=True, db_index=True)
     is_deleted = models.BooleanField(default=False)
 
     objects = models.Manager()

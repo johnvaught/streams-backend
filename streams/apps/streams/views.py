@@ -96,10 +96,6 @@ def delete_stream(request, stream_id):
     return Response({'Deleted': f'{stream}'}, status=status.HTTP_204_NO_CONTENT)
 
 
-
-
-
-
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def get_my_own_streams(request):
@@ -118,6 +114,19 @@ def get_streams_i_follow(request):
 
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def get_streams(request):
+    own_streams = Stream.objects.filter(owner=request.user)
+    own_streams_serializer = StreamSerializer(own_streams, many=True)
+
+    stream_ids = Follow.objects.filter(account=request.user, stream_follows_account=True).values('stream')
+    streams = Stream.objects.filter(id__in=stream_ids)
+    serializer = StreamSerializer(streams, many=True)
+    return Response({'ownStreams': own_streams_serializer.data, 'followedStreams': serializer.data},
+                    status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
 @permission_classes([AllowAny])
 def get_posts_for_stream(request):
     try:
@@ -129,7 +138,7 @@ def get_posts_for_stream(request):
     posts = Post.objects.filter(id__in=post_ids)
 
     paginator = PageNumberPagination()
-    paginator.page_size = 3
+    paginator.page_size = 9
     result_page = paginator.paginate_queryset(posts, request)
 
     serializer = PostSerializer(result_page, many=True)

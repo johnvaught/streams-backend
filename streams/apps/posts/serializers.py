@@ -1,10 +1,12 @@
 from rest_framework import serializers
+
 from .models import Post
+from streams.settings import DEFAULT_PROFILE_IMAGE
 
 
 class PostSerializer(serializers.ModelSerializer):
     handle = serializers.CharField(source='account.handle', read_only=True)
-    profile_image = serializers.URLField(source='account.profile.image', read_only=True)
+    profile_image = serializers.SerializerMethodField(read_only=True)
     is_private = serializers.BooleanField(source='account.profile.is_private', read_only=True)
     created_at = serializers.SerializerMethodField(method_name='get_created_at', read_only=True)
     updated_at = serializers.SerializerMethodField(method_name='get_updated_at', read_only=True)
@@ -19,6 +21,12 @@ class PostSerializer(serializers.ModelSerializer):
         # read_only_fields = ('handle', 'profile_image', 'is_private', 'created_at', 'updated_at')
         # TODO: Read up on optional fields and how they relate to read_only.
         # optional_fields = ('account', 'handle', 'profile_image', 'is_private', 'created_at', 'updated_at')
+
+    def get_profile_image(self, obj):
+        if obj.account.profile.image:
+            return obj.account.profile.image
+
+        return DEFAULT_PROFILE_IMAGE
 
     def create(self, validated_data):
         account = self.context.get('account')
