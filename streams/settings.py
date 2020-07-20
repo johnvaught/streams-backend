@@ -143,11 +143,13 @@ REST_FRAMEWORK = {
     # 'PAGE_SIZE': 30,
 }
 
+DEFAULT_PAGINATION_SIZE = 20
+
 # Simple JWT
 SIMPLE_JWT = {
     # TODO: MUST UPDATE LIFETIMES BEFORE DEPLOYMENT
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10),
-    'REFRESH_TOKEN_LIFETIME': timedelta(minutes=20),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(minutes=120),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
 

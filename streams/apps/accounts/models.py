@@ -24,7 +24,8 @@ class AccountManager(BaseUserManager):
 
         # When a user is created, an associated one-to-one profile
         # must be created as well.
-        Profile.objects.create(account=user)
+        # Profile.objects.create(account=user)
+        # ^ I do this in the serializer now
 
         return user
 
@@ -73,6 +74,7 @@ class Account(AbstractBaseUser, PermissionsMixin, TimestampedModel):
             'Unselect this instead of deleting accounts.'
         ),
     )
+    follows = models.ManyToManyField("self", through="follows.Follow", symmetrical=False)
 
     objects = AccountManager()
 

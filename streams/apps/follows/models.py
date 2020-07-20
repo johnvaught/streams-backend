@@ -27,6 +27,10 @@ class Follow(TimestampedModel):
 
     objects = FollowManager()
 
+    @property
+    def stream_owner(self):
+        return self.stream.owner
+
     class Meta:
         """
         A stream cannot follow an account multiple times, and vice versa.
@@ -47,7 +51,7 @@ class Follow(TimestampedModel):
         https://stackoverflow.com/questions/4441539/why-doesnt-djangos-model-save-call-full-clean
         # TODO: Is clean called from Serializer.is_validated?
         """
-        if self.stream.account == self.account:
+        if self.stream.owner == self.account:
             # TODO: Remove testing print
             print('TESTING: Validation error called from Follows.clean')
             raise ValidationError({'error': _('You may not follow your own account or stream.')})

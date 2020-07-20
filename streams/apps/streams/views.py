@@ -11,106 +11,7 @@ from streams.apps.follows.models import Follow
 from streams.apps.posts.models import Post
 from streams.apps.posts.serializers import PostSerializer
 
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def create_stream(request):
-    serializer_context = {'account': request.user}
-    serializer = StreamSerializer(data=request.data, context=serializer_context)
-    serializer.is_valid(raise_exception=True)
-    serializer.save()
-    return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def read_stream(request, stream_id):
-    try:
-        stream = Stream.objects.get(pk=stream_id)
-    except Stream.DoesNotExist:
-        raise Http404
-
-    if stream.owner != request.user:
-        return Response(status=status.HTTP_403_FORBIDDEN)
-
-    serializer = StreamSerializer(stream)
-    return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def read_public_stream(request, stream_id):
-    try:
-        stream = Stream.objects.get(pk=stream_id)
-    except Stream.DoesNotExist:
-        raise Http404
-
-    if stream.is_private:
-        return Response(status=status.HTTP_403_FORBIDDEN)
-
-    serializer = StreamSerializer(stream)
-    return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def read_public_streams_for(request, handle):
-    try:
-        streams = Stream.objects.filter(owner__handle=handle, is_private=False)
-    except Stream.DoesNotExist:
-        raise Http404
-
-    serializer = StreamSerializer(streams, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def update_stream(request, stream_id):
-    try:
-        stream = Stream.objects.get(pk=stream_id)
-    except Stream.DoesNotExist:
-        raise Http404
-
-    if stream.owner != request.user:
-        return Response(status=status.HTTP_403_FORBIDDEN)
-
-    serializer = StreamSerializer(stream, data=request.data, partial=True)
-    serializer.is_valid(raise_exception=True)
-    serializer.save()
-    return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-@api_view(['DELETE'])
-@permission_classes([IsAuthenticated])
-def delete_stream(request, stream_id):
-    try:
-        stream = Stream.objects.get(pk=stream_id)
-    except Stream.DoesNotExist:
-        raise Http404
-
-    if stream.owner != request.user:
-        return Response(status=status.HTTP_403_FORBIDDEN)
-
-    stream.set_deleted()
-    return Response({'Deleted': f'{stream}'}, status=status.HTTP_204_NO_CONTENT)
-
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def get_my_own_streams(request):
-    streams = Stream.objects.filter(owner=request.user)
-    serializer = StreamSerializer(streams, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def get_streams_i_follow(request):
-    stream_ids = Follow.objects.filter(account=request.user, stream_follows_account=True).values('stream')
-    streams = Stream.objects.filter(id__in=stream_ids)
-    serializer = StreamSerializer(streams, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+from streams.settings import DEFAULT_PAGINATION_SIZE as DPS
 
 
 @api_view(['POST'])
@@ -119,27 +20,139 @@ def get_streams(request):
     own_streams = Stream.objects.filter(owner=request.user)
     own_streams_serializer = StreamSerializer(own_streams, many=True)
 
-    stream_ids = Follow.objects.filter(account=request.user, stream_follows_account=True).values('stream')
-    streams = Stream.objects.filter(id__in=stream_ids)
-    serializer = StreamSerializer(streams, many=True)
-    return Response({'ownStreams': own_streams_serializer.data, 'followedStreams': serializer.data},
+    followed_stream_ids = Follow.objects.filter(account=request.user, stream_follows_account=True).values('stream')
+    followed_streams = Stream.objects.filter(id__in=followed_stream_ids)
+    followed_streams_serializer = StreamSerializer(followed_streams, many=True)
+
+    posts = {}
+
+    for stream_list in (own_streams_serializer.data, followed_streams_serializer.data):
+        for stream in stream_list:
+            post_ids = Follow.objects.filter(stream__id=stream['id'], stream_follows_account=True).values('account__posts')
+            posts_data = Post.objects.filter(id__in=post_ids).order_by('-id')[:DPS]
+            serializer = PostSerializer(posts_data, many=True)
+            posts[stream['id']] = serializer.data
+
+    return Response({'ownStreams': own_streams_serializer.data, 'followedStreams': followed_streams_serializer.data,
+                     'posts': posts},
                     status=status.HTTP_200_OK)
 
 
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def get_posts_for_stream(request):
-    try:
-        stream_id = request.data['stream_id']
-    except KeyError:
-        return Response({'details': {'required fields': ['stream_id']}}, status=status.HTTP_400_BAD_REQUEST)
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# def create_stream(request):
+#     serializer_context = {'account': request.user}
+#     serializer = StreamSerializer(data=request.data, context=serializer_context)
+#     serializer.is_valid(raise_exception=True)
+#     serializer.save()
+#     return Response(serializer.data, status=status.HTTP_201_CREATED)
+#
+#
+# @api_view(['GET'])
+# @permission_classes([IsAuthenticated])
+# def read_stream(request, stream_id):
+#     try:
+#         stream = Stream.objects.get(pk=stream_id)
+#     except Stream.DoesNotExist:
+#         raise Http404
+#
+#     if stream.owner != request.user:
+#         return Response(status=status.HTTP_403_FORBIDDEN)
+#
+#     serializer = StreamSerializer(stream)
+#     return Response(serializer.data, status=status.HTTP_200_OK)
+#
+#
+# @api_view(['GET'])
+# @permission_classes([AllowAny])
+# def read_public_stream(request, stream_id):
+#     try:
+#         stream = Stream.objects.get(pk=stream_id)
+#     except Stream.DoesNotExist:
+#         raise Http404
+#
+#     if stream.is_private:
+#         return Response(status=status.HTTP_403_FORBIDDEN)
+#
+#     serializer = StreamSerializer(stream)
+#     return Response(serializer.data, status=status.HTTP_200_OK)
+#
+#
+# @api_view(['GET'])
+# @permission_classes([AllowAny])
+# def read_public_streams_for(request, handle):
+#     try:
+#         streams = Stream.objects.filter(owner__handle=handle, is_private=False)
+#     except Stream.DoesNotExist:
+#         raise Http404
+#
+#     serializer = StreamSerializer(streams, many=True)
+#     return Response(serializer.data, status=status.HTTP_200_OK)
+#
+#
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# def update_stream(request, stream_id):
+#     try:
+#         stream = Stream.objects.get(pk=stream_id)
+#     except Stream.DoesNotExist:
+#         raise Http404
+#
+#     if stream.owner != request.user:
+#         return Response(status=status.HTTP_403_FORBIDDEN)
+#
+#     serializer = StreamSerializer(stream, data=request.data, partial=True)
+#     serializer.is_valid(raise_exception=True)
+#     serializer.save()
+#     return Response(serializer.data, status=status.HTTP_200_OK)
+#
+#
+# @api_view(['DELETE'])
+# @permission_classes([IsAuthenticated])
+# def delete_stream(request, stream_id):
+#     try:
+#         stream = Stream.objects.get(pk=stream_id)
+#     except Stream.DoesNotExist:
+#         raise Http404
+#
+#     if stream.owner != request.user:
+#         return Response(status=status.HTTP_403_FORBIDDEN)
+#
+#     stream.set_deleted()
+#     return Response({'Deleted': f'{stream}'}, status=status.HTTP_204_NO_CONTENT)
+#
 
-    post_ids = Follow.objects.filter(stream__id=stream_id, stream_follows_account=True).values('account__posts')
-    posts = Post.objects.filter(id__in=post_ids)
-
-    paginator = PageNumberPagination()
-    paginator.page_size = 9
-    result_page = paginator.paginate_queryset(posts, request)
-
-    serializer = PostSerializer(result_page, many=True)
-    return paginator.get_paginated_response(serializer.data)
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# def get_my_own_streams(request):
+#     streams = Stream.objects.filter(owner=request.user)
+#     serializer = StreamSerializer(streams, many=True)
+#     return Response(serializer.data, status=status.HTTP_200_OK)
+#
+#
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# def get_streams_i_follow(request):
+#     stream_ids = Follow.objects.filter(account=request.user, stream_follows_account=True).values('stream')
+#     streams = Stream.objects.filter(id__in=stream_ids)
+#     serializer = StreamSerializer(streams, many=True)
+#     return Response(serializer.data, status=status.HTTP_200_OK)
+#
+#
+# @api_view(['POST'])
+# @permission_classes([AllowAny])
+# def get_posts_for_stream(request):
+#     try:
+#         stream_id = request.data['stream_id']
+#     except KeyError:
+#         return Response({'details': {'required fields': ['stream_id']}}, status=status.HTTP_400_BAD_REQUEST)
+#
+#     post_ids = Follow.objects.filter(stream__id=stream_id, stream_follows_account=True).values('account__posts')
+#     posts = Post.objects.filter(id__in=post_ids)
+#
+#     paginator = PageNumberPagination()
+#     paginator.page_size = 9
+#     result_page = paginator.paginate_queryset(posts, request)
+#
+#     serializer = PostSerializer(result_page, many=True)
+#     return paginator.get_paginated_response(serializer.data)

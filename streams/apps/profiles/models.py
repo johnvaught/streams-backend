@@ -19,7 +19,10 @@ class Profile(TimestampedModel):
     full_name = models.CharField(max_length=50, blank=True)
     image = models.URLField(blank=True, default="")
     bio = models.TextField(max_length=1000, blank=True, default="")
+    last_stream = models.IntegerField(default=0)
     is_private = models.BooleanField(default=False)
+    follower_count = models.IntegerField(default=0)
+    following_count = models.IntegerField(default=0)
 
     objects = ProfileManager()
 
@@ -30,3 +33,8 @@ class Profile(TimestampedModel):
 
     def __str__(self):
         return self.account.handle
+
+
+# class ProfileFollows(TimestampedModel):
+#     account = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.CASCADE)
+

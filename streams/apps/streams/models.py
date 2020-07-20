@@ -15,8 +15,8 @@ class Stream(TimestampedModel):
     https://docs.djangoproject.com/en/3.0/ref/models/fields/#django.db.models.ManyToManyField.through
     """
     owner = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.CASCADE)
-    account = models.ManyToManyField(AUTH_USER_MODEL, through='follows.Follow',
-                                     related_name='streams')
+    # account = models.ManyToManyField(AUTH_USER_MODEL, through='follows.Follow',
+    #                                  related_name='streams')
     name = models.CharField(max_length=15)
     is_private = models.BooleanField(default=True)
     is_deleted = models.BooleanField(default=False)

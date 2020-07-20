@@ -35,30 +35,6 @@ def get_profile(request):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def update_profile(request):
-    serializer = ProfileSerializer(request.user.profile, data=request.data, partial=True)
-    serializer.is_valid(raise_exception=True)
-    serializer.save()
-    return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
-
-
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def read_public_profile(request, handle):
-    try:
-        profile = Profile.objects.select_related('account').get(account__handle=handle)
-    except Profile.DoesNotExist:
-        raise Http404()
-
-    if profile.is_private:
-        return Response(status=status.HTTP_403_FORBIDDEN)
-
-    serializer = ProfileSerializer(profile)
-    return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-@api_view(['POST'])
 @permission_classes([AllowAny])
 def search_profiles(request):
     try:
@@ -72,4 +48,26 @@ def search_profiles(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# def update_profile(request):
+#     serializer = ProfileSerializer(request.user.profile, data=request.data, partial=True)
+#     serializer.is_valid(raise_exception=True)
+#     serializer.save()
+#     return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
+#
+#
+# @api_view(['GET'])
+# @permission_classes([AllowAny])
+# def read_public_profile(request, handle):
+#     try:
+#         profile = Profile.objects.select_related('account').get(account__handle=handle)
+#     except Profile.DoesNotExist:
+#         raise Http404()
+#
+#     if profile.is_private:
+#         return Response(status=status.HTTP_403_FORBIDDEN)
+#
+#     serializer = ProfileSerializer(profile)
+#     return Response(serializer.data, status=status.HTTP_200_OK)
 
