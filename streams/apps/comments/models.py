@@ -8,14 +8,14 @@ from django.utils.translation import gettext_lazy as _
 # mark it deleted in the UI, not hide it completely.
 class CommentManager(models.Manager):
     def get_queryset(self):
-        return super(CommentManager, self).get_queryset().select_related('account')\
-            .filter(account__is_active=True, is_deleted=False)
+        return super(CommentManager, self).get_queryset().select_related('owner')\
+            .filter(owner__account__is_active=True, is_deleted=False)
 
 
 class Comment(TimestampedModel):
+    owner = models.ForeignKey('profiles.Profile', on_delete=models.CASCADE)
     post = models.ForeignKey('posts.Post', related_name='comments', on_delete=models.CASCADE)
     parent = models.ForeignKey('self', related_name='children', on_delete=models.CASCADE, null=True, default=None)
-    account = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.CASCADE)
     caption = models.CharField(max_length=2200)
     is_deleted = models.BooleanField(default=False)
 
@@ -23,7 +23,7 @@ class Comment(TimestampedModel):
     active = CommentManager()
 
     def __str__(self):
-        return f'account: {self.account}, comment: {self.caption[:20]}'
+        return f'profile: {self.owner.handle}, comment: {self.caption[:20]}'
 
     def set_deleted(self):
         self.is_deleted = True

@@ -6,12 +6,12 @@ from django.utils.translation import gettext_lazy as _
 
 class LikeManager(models.Manager):
     def get_queryset(self):
-        return super(LikeManager, self).get_queryset().select_related('account')\
-            .filter(account__is_active=True, is_deleted=False)
+        return super(LikeManager, self).get_queryset().select_related('owner')\
+            .filter(owner__account__is_active=True, is_deleted=False)
 
 
 class Like(TimestampedModel):
-    account = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.CASCADE)
+    owner = models.ForeignKey('profiles.Profile', on_delete=models.CASCADE)
     post = models.ForeignKey('posts.Post', on_delete=models.CASCADE, null=True, db_index=True)
     comment = models.ForeignKey('comments.Comment', on_delete=models.CASCADE, null=True, db_index=True)
     is_deleted = models.BooleanField(default=False)
@@ -24,7 +24,7 @@ class Like(TimestampedModel):
         models.UniqueConstraint(fields=['post', 'comment'], name='comment_XOR_post')
 
     def __str__(self):
-        return f'{self.account.handle} likes {self.post}{self.comment}'
+        return f'{self.owner.handle} likes {self.post}{self.comment}'
 
     def unlike(self):
         self.is_deleted = True

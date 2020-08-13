@@ -1,8 +1,31 @@
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from .models import Account
 from streams.apps.profiles.serializers import ProfileSerializer
 from streams.apps.profiles.models import Profile
 from streams.settings import DEFAULT_PROFILE_IMAGE
+
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # Add custom claims
+        token['authProfileId'] = user.profile.id
+
+        return token
+
+
+class MyTokenRefreshSerializer(TokenRefreshSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # Add custom claims
+        token['authProfileId'] = user.profile.id
+
+        return token
 
 
 class AccountSerializer(serializers.ModelSerializer):

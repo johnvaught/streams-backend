@@ -31,4 +31,4 @@ class ProfileSerializer(serializers.ModelSerializer):
         return DEFAULT_PROFILE_IMAGE
 
     def get_post_count(self, obj):
-        return obj.account.posts.count()
+        return obj.posts.count()

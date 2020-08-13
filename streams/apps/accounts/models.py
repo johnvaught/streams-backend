@@ -1,10 +1,9 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin, UserManager
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.contrib.auth.validators import UnicodeHandleValidator
 from django.core.mail import send_mail
 from django.utils.translation import gettext_lazy as _
 from streams.apps.core.models import TimestampedModel
-from streams.apps.profiles.models import Profile
 
 
 class AccountManager(BaseUserManager):
@@ -26,6 +25,7 @@ class AccountManager(BaseUserManager):
         # must be created as well.
         # Profile.objects.create(account=user)
         # ^ I do this in the serializer now
+        # which means if i create an account not with my webapp there is no profile associated.
 
         return user
 
@@ -74,7 +74,6 @@ class Account(AbstractBaseUser, PermissionsMixin, TimestampedModel):
             'Unselect this instead of deleting accounts.'
         ),
     )
-    follows = models.ManyToManyField("self", through="follows.Follow", symmetrical=False)
 
     objects = AccountManager()
 
@@ -104,7 +103,6 @@ class Account(AbstractBaseUser, PermissionsMixin, TimestampedModel):
 
     def set_inactive(self):
         self.is_active = False
-        Account.posts.is_active = False
         self.save()
 
 

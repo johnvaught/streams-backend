@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 
 class TimestampedModel(models.Model):
     # A timestamp representing when this object was created.
-    created_at = models.DateTimeField(_('date joined'), default=timezone.now)
+    created_at = models.DateTimeField(_('created at'), default=timezone.now)
 
     # A timestamp representing when this object was last updated.
     updated_at = models.DateTimeField(auto_now=True)

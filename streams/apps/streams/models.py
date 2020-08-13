@@ -5,8 +5,8 @@ from streams.apps.core.models import TimestampedModel
 
 class StreamManager(models.Manager):
     def get_queryset(self):
-        return super(StreamManager, self).get_queryset().select_related('owner') \
-            .filter(owner__is_active=True, is_deleted=False)
+        return super(StreamManager, self).get_queryset() \
+            .select_related('owner').filter(owner__account__is_active=True, is_deleted=False)
 
 
 class Stream(TimestampedModel):
@@ -14,12 +14,12 @@ class Stream(TimestampedModel):
     For more info on ManyToManyField(through=),
     https://docs.djangoproject.com/en/3.0/ref/models/fields/#django.db.models.ManyToManyField.through
     """
-    owner = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.CASCADE)
-    # account = models.ManyToManyField(AUTH_USER_MODEL, through='follows.Follow',
-    #                                  related_name='streams')
-    name = models.CharField(max_length=15)
+    owner = models.ForeignKey('profiles.Profile', on_delete=models.CASCADE)
+    name = models.CharField(max_length=25)
     is_private = models.BooleanField(default=True)
     is_deleted = models.BooleanField(default=False)
+    followed_profiles = models.ManyToManyField('profiles.Profile', through='follows.ProfileFollow',
+                                               related_name='following_streams')
 
     objects = StreamManager()
 

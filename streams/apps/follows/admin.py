@@ -1,9 +1,14 @@
 from django.contrib import admin
-from .models import Follow
+from .models import ProfileFollow, StreamFollow
 
 
-class FollowAdmin(admin.ModelAdmin):
-    model = Follow
+class ProfileFollowAdmin(admin.ModelAdmin):
+    model = ProfileFollow
 
 
-admin.site.register(Follow, FollowAdmin)
+class StreamFollowAdmin(admin.ModelAdmin):
+    model = StreamFollow
+
+
+admin.site.register(ProfileFollow, ProfileFollowAdmin)
+admin.site.register(StreamFollow, StreamFollowAdmin)

@@ -4,38 +4,94 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
+from django.db.models import Q
 
 from .serializers import StreamSerializer
 from .models import Stream
-from streams.apps.follows.models import Follow
+from streams.apps.profiles.models import Profile
+from streams.apps.follows.models import ProfileFollow, StreamFollow
+from streams.apps.follows.serializers import ProfileFollowSerializer
 from streams.apps.posts.models import Post
 from streams.apps.posts.serializers import PostSerializer
 
-from streams.settings import DEFAULT_PAGINATION_SIZE as DPS
+
+# def get_streams_for_profile_helper(profile):
+#     followed_streams = StreamFollow.objects.filter(profile=profile).values('stream')
+#     all_streams = Stream.objects.filter(Q(owner=profile) | Q(pk__in=followed_streams))
+#     streams_serializer = StreamSerializer(all_streams, many=True)
+#
+#     posts = {}
+#     for stream in streams_serializer.data:
+#         profile_ids = ProfileFollow.objects.filter(stream=stream['id']).values('profile')
+#         stream_posts = Post.objects.filter(owner__in=profile_ids).order_by('-id')[:20]
+#
+#         paginator = PageNumberPagination(stream_posts)
+#         post_serializer = PostSerializer(stream_posts, many=True)
+#         posts[stream['id']] = post_serializer.data
+#
+#     return {'streams': streams_serializer.data, 'posts': posts, 'profileId': profile.id}
+
+
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# def get_streams(request):
+#     data = get_streams_for_profile_helper(request.user.profile)
+#     return Response(data, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def get_streams(request):
-    own_streams = Stream.objects.filter(owner=request.user)
-    own_streams_serializer = StreamSerializer(own_streams, many=True)
+@permission_classes([AllowAny])
+def get_streams_for_profile(request):
+    profile_id = request.data.get('profileId')
+    if not profile_id:
+        return Response({'details': {'required_fields': ['profileId']}}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        profile = Profile.objects.get(pk=profile_id)
+    except Profile.DoesNotExist:
+        raise Http404
 
-    followed_stream_ids = Follow.objects.filter(account=request.user, stream_follows_account=True).values('stream')
-    followed_streams = Stream.objects.filter(id__in=followed_stream_ids)
-    followed_streams_serializer = StreamSerializer(followed_streams, many=True)
+    followed_streams = StreamFollow.objects.filter(profile=profile).values('stream')
+    all_streams = Stream.objects.filter(Q(owner=profile) | Q(pk__in=followed_streams))
+    streams_serializer = StreamSerializer(all_streams, many=True)
 
     posts = {}
+    for stream in streams_serializer.data:
+        profile_ids = ProfileFollow.objects.filter(stream=stream['id']).values('profile')
+        stream_posts = Post.objects.filter(owner__in=profile_ids).order_by('-id')[:20]
 
-    for stream_list in (own_streams_serializer.data, followed_streams_serializer.data):
-        for stream in stream_list:
-            post_ids = Follow.objects.filter(stream__id=stream['id'], stream_follows_account=True).values('account__posts')
-            posts_data = Post.objects.filter(id__in=post_ids).order_by('-id')[:DPS]
-            serializer = PostSerializer(posts_data, many=True)
-            posts[stream['id']] = serializer.data
+        paginator = PageNumberPagination()
+        paginator.page_size = 4
+        result_page = paginator.paginate_queryset(stream_posts, request)
 
-    return Response({'ownStreams': own_streams_serializer.data, 'followedStreams': followed_streams_serializer.data,
-                     'posts': posts},
-                    status=status.HTTP_200_OK)
+        post_serializer = PostSerializer(result_page, many=True)
+        posts[stream['id']] = post_serializer.data
+
+    data = {'streams': streams_serializer.data, 'posts': posts, 'profileId': profile.id}
+
+    return Response(data, status=status.HTTP_200_OK)
+
+
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# def follow_profile(request):
+#     try:
+#         profile_id = request.data['profileId']
+#         stream_id = request.data['streamId']
+#         profile = Profile.objects.get(pk=profile_id)
+#         stream = Stream.objects.get(pk=stream_id)
+#     except KeyError:
+#         return Response({'details': {'required fields': ['profileId', 'streamId']}}, status=status.HTTP_400_BAD_REQUEST)
+#     except Stream.DoesNotExist:
+#         raise Http404('Stream with that id not found.')
+#     except Profile.DoesNotExist:
+#         raise Http404('Profile with that id not found.')
+#
+#     serializer_context = {'profile': profile, 'stream': stream}
+#     serializer = ProfileFollowSerializer(data={}, context=serializer_context)
+#     serializer.is_valid(raise_exception=True)
+#     serializer.save()
+#
+#     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 # @api_view(['POST'])

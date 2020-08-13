@@ -1,16 +1,26 @@
 from rest_framework import serializers
-from .models import Follow
+from .models import StreamFollow, ProfileFollow
 
 
-class FollowSerializer(serializers.ModelSerializer):
-    profile = serializers.CharField(source='account.profile', read_only=True)
-
+class StreamFollowSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Follow
-        fields = ['profile', 'stream', 'stream_follows_account']
-        read_only_fields = ['stream']
+        model = StreamFollow
+        fields = ['profile', 'stream', 'is_deleted']
+        read_only_fields = ['profile', 'stream']
 
     def create(self, validated_data):
-        account = self.context.get('account')
+        profile = self.context.get('profile')
         stream = self.context.get('stream')
-        return Follow.objects.create(account=account, stream=stream, **validated_data)
+        return StreamFollow.objects.create(profile=profile, stream=stream, **validated_data)
+
+
+class ProfileFollowSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProfileFollow
+        fields = ['profile', 'stream', 'is_deleted']
+        read_only_fields = ['profile', 'stream']
+
+    def create(self, validated_data):
+        profile = self.context.get('profile')
+        stream = self.context.get('stream')
+        return ProfileFollow.objects.create(profile=profile, stream=stream, **validated_data)

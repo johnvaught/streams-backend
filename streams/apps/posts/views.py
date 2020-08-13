@@ -10,13 +10,13 @@ from rest_framework.pagination import PageNumberPagination
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
-def get_posts_for_account(request):
+def get_posts_for_profile(request):
     try:
-        account_id = request.data['account_id']
+        profile_id = request.data['profileId']
     except KeyError:
         return Response({'details': {'required fields': ['account_id']}}, status=status.HTTP_400_BAD_REQUEST)
 
-    posts = Post.objects.filter(account=account_id)
+    posts = Post.objects.filter(owner=profile_id)
 
     paginator = PageNumberPagination()
     paginator.page_size = 12

@@ -6,8 +6,9 @@ from rest_framework.views import Response
 from rest_framework import status
 from .serializers import ProfileSerializer
 from .models import Profile
+from rest_framework.pagination import PageNumberPagination
 from streams.apps.posts.models import Post
-from streams.apps.follows.models import Follow
+from streams.apps.follows.models import ProfileFollow
 
 
 @api_view(['POST'])
@@ -21,12 +22,12 @@ def get_my_profile(request):
 @permission_classes([AllowAny])
 def get_profile(request):
     try:
-        profileId = request.data['id']
+        profile_id = request.data['profileId']
     except KeyError:
-        return Response({'details': {'required fields': ['id']}}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'details': {'required fields': ['profileId']}}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        profile = Profile.objects.get(pk=profileId)
+        profile = Profile.objects.get(pk=profile_id)
     except Profile.DoesNotExist:
         raise Http404()
 
@@ -43,10 +44,24 @@ def search_profiles(request):
         return Response({'details': {'required fields': ['query']}}, status=status.HTTP_400_BAD_REQUEST)
 
     profiles = Profile.objects.filter(Q(account__handle__icontains=query) | Q(full_name__icontains=query))
-    serializer = ProfileSerializer(profiles, many=True)
 
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    paginator = PageNumberPagination()
+    paginator.page_size = 3
+    result_page = paginator.paginate_queryset(profiles, request)
 
+    serializer = ProfileSerializer(result_page, many=True)
+    return paginator.get_paginated_response(serializer.data)
+
+    # return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # posts = Post.objects.filter(owner=profile_id)
+    #
+    # paginator = PageNumberPagination()
+    # paginator.page_size = 12
+    # result_page = paginator.paginate_queryset(posts, request)
+    #
+    # serializer = PostSerializer(result_page, many=True)
+    # return paginator.get_paginated_response(serializer.data)
 
 # @api_view(['POST'])
 # @permission_classes([IsAuthenticated])
