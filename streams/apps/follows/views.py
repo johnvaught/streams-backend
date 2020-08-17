@@ -18,52 +18,47 @@ from streams.apps.streams.serializers import StreamSerializer
 from streams.apps.streams.models import Stream
 
 
-def get_followers_for_profile_helper(profile_id, request):
+def get_followers_for_profile_helper(handle, request):
     # get the streams that follow this profile, then get their owners.
-    streams_following = ProfileFollow.objects.filter(profile=profile_id).values('stream')
-    profile_owners_of_streams_following = Stream.objects.filter(pk__in=streams_following).values('owner').distinct()
+    streams_following = ProfileFollow.objects.filter(profile__account__handle=handle).values('stream')
+    profile_owners_of_streams_following = Stream.objects.filter(pk__in=streams_following).values('owner')
 
     # get all the people following any one of these streams that is following this profile.
     profiles_following_streams_following = StreamFollow.objects.filter(stream__in=streams_following)\
-        .values('profile').distinct()
+        .values('profile')
 
     profiles = Profile.objects\
-        .filter(Q(pk__in=profile_owners_of_streams_following) | Q(pk__in=profiles_following_streams_following))
+        .filter(Q(pk__in=profile_owners_of_streams_following) | Q(pk__in=profiles_following_streams_following)).distinct()
 
     paginator = PageNumberPagination()
-    paginator.page_size = 3
+    paginator.page_size = 20
     result_page = paginator.paginate_queryset(profiles, request)
 
     serializer = ProfileSerializer(result_page, many=True)
     return paginator.get_paginated_response(serializer.data)
 
-    # serializer = ProfileSerializer(profiles, many=True)
-    #
-    # return serializer.data
-
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def get_followers_for_profile(request):
-    profile_id = request.data.get('profileId')
-    if not profile_id:
-        return Response({'details': {'required_fields': ['profileId']}}, status=status.HTTP_400_BAD_REQUEST)
-    return get_followers_for_profile_helper(profile_id, request)
+    handle = request.data.get('handle')
+    if not handle:
+        return Response({'details': {'required_fields': ['handle']}}, status=status.HTTP_400_BAD_REQUEST)
+    return get_followers_for_profile_helper(handle, request)
     # return Response(data, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def get_followers_for_me(request):
-    return get_followers_for_profile_helper(request.user.profile, request)
-    # return Response({'data': data, 'profile': request.user.profile.id}, status=status.HTTP_200_OK)
+    return get_followers_for_profile_helper(request.user.handle, request)
 
 
-def get_following_for_profile_helper(profile_id, request):
-    stream_ids = Stream.objects.filter(owner=profile_id)
+def get_following_for_profile_helper(handle, request):
+    stream_ids = Stream.objects.filter(owner__account__handle=handle)
     profiles_ids = ProfileFollow.objects.filter(stream__in=stream_ids).values('profile').distinct()
 
-    stream_follow_ids = StreamFollow.objects.filter(profile=profile_id).values('stream')
+    stream_follow_ids = StreamFollow.objects.filter(profile__account__handle=handle).values('stream')
     followed_streams = Stream.objects.filter(pk__in=stream_follow_ids)
     followed_stream_profiles_followed_ids = ProfileFollow.objects\
         .filter(stream__in=followed_streams).values('profile').distinct()
@@ -78,26 +73,20 @@ def get_following_for_profile_helper(profile_id, request):
     serializer = ProfileSerializer(result_page, many=True)
     return paginator.get_paginated_response(serializer.data)
 
-    # serializer = ProfileSerializer(profiles, many=True)
-    #
-    # return serializer.data
-
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def get_following_for_profile(request):
-    profile_id = request.data.get('profileId')
-    if not profile_id:
+    handle = request.data.get('handle')
+    if not handle:
         return Response({'details': {'required_fields': ['profileId']}}, status=status.HTTP_400_BAD_REQUEST)
-    return get_following_for_profile_helper(profile_id, request)
-    # return Response(data, status=status.HTTP_200_OK)
+    return get_following_for_profile_helper(handle, request)
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def get_following_for_me(request):
-    return get_following_for_profile_helper(request.user.profile, request)
-    # return Response({'data': data, 'profile': request.user.profile.id}, status=status.HTTP_200_OK)
+    return get_following_for_profile_helper(request.user.handle, request)
 
 
 @api_view(['POST'])
@@ -157,19 +146,19 @@ def unfollow_stream(request):
 @permission_classes([IsAuthenticated])
 def unfollow_profile(request):
     stream_id = request.data.get('streamId')
-    profile_id = request.data.get('profileId')
-    if not stream_id or not profile_id:
+    handle = request.data.get('handle')
+    if not stream_id or not handle:
         return Response({'details': {'required_fields': ['streamId', 'profileId']}}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
         stream = Stream.objects.get(pk=stream_id)
-        profile = Profile.objects.get(pk=profile_id)
+        profile = Profile.objects.get(account__handle=handle)
     except Stream.DoesNotExist:
         raise Http404
     except Profile.DoesNotExist:
         raise Http404
 
-    if stream.owner != request.user.profile:
+    if stream.owner.id is not request.user.profile.id:
         print(stream.owner)
         print(request.user.profile)
         return Response(status=status.HTTP_403_FORBIDDEN)
@@ -187,18 +176,18 @@ def unfollow_profile(request):
 @permission_classes([IsAuthenticated])
 def follow_profile(request):
     try:
-        profile_id = request.data['profileId']
+        handle = request.data['handle']
         stream_id = request.data['streamId']
-        profile = Profile.objects.get(pk=profile_id)
+        profile = Profile.objects.get(account__handle=handle)
         stream = Stream.objects.get(pk=stream_id)
     except KeyError:
-        return Response({'details': {'required fields': ['profileId', 'streamId']}}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'details': {'required fields': ['handle', 'streamId']}}, status=status.HTTP_400_BAD_REQUEST)
     except Stream.DoesNotExist:
         raise Http404('Stream with that id not found.')
     except Profile.DoesNotExist:
         raise Http404('Profile with that id not found.')
 
-    if stream.owner.id is not request.user.profile.id:
+    if stream.owner.id != request.user.profile.id:
         return Response(status=status.HTTP_403_FORBIDDEN)
 
     serializer_context = {'profile': profile, 'stream': stream}
@@ -231,6 +220,43 @@ def follow_stream(request):
 
     stream_serializer = StreamSerializer(stream)
     return Response(stream_serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def get_followers_for_stream(request):
+    stream_id = request.data.get('streamId')
+    if not stream_id:
+        return Response({'details': {'required_fields': ['streamId']}}, status=status.HTTP_400_BAD_REQUEST)
+
+    profile_ids = StreamFollow.objects.filter(stream=stream_id).values('profile')
+    profiles = Profile.objects.filter(pk__in=profile_ids)
+
+    paginator = PageNumberPagination()
+    paginator.page_size = 20
+    result_page = paginator.paginate_queryset(profiles, request)
+
+    serializer = ProfileSerializer(result_page, many=True)
+    return paginator.get_paginated_response(serializer.data)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def get_following_for_stream(request):
+    stream_id = request.data.get('streamId')
+    if not stream_id:
+        return Response({'details': {'required_fields': ['streamId']}}, status=status.HTTP_400_BAD_REQUEST)
+
+    profile_ids = ProfileFollow.objects.filter(stream=stream_id).values('profile')
+    profiles = Profile.objects.filter(pk__in=profile_ids)
+
+    paginator = PageNumberPagination()
+    paginator.page_size = 20
+    result_page = paginator.paginate_queryset(profiles, request)
+
+    serializer = ProfileSerializer(result_page, many=True)
+    return paginator.get_paginated_response(serializer.data)
+
 
 # @api_view(['GET'])
 # @permission_classes([IsAuthenticated])

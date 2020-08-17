@@ -7,12 +7,19 @@ from rest_framework_simplejwt.views import (
 )
 
 from streams.apps.accounts.views import (
-    create_account,
     MyTokenObtainPairView,
-    MyTokenRefreshView
+    MyTokenRefreshView,
+    create_account,
+    get_account,
+    update_account,
+    delete_account,
 )
 
 from streams.apps.streams.views import (
+    get_stream,
+    create_stream,
+    update_stream,
+    delete_stream,
     get_streams_for_profile,
 )
 
@@ -32,6 +39,8 @@ from streams.apps.follows.views import (
     unfollow_profile,
     follow_profile,
     follow_stream,
+    get_followers_for_stream,
+    get_following_for_stream,
 )
 
 from streams.apps.likes.views import (
@@ -44,6 +53,7 @@ from streams.apps.likes.views import (
 )
 
 from streams.apps.posts.views import (
+    get_posts_for_stream,
     get_posts_for_profile,
 )
 
@@ -54,15 +64,23 @@ urlpatterns = [
     path('api/login', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/refreshLogin', MyTokenRefreshView.as_view(), name='token_refresh'),
     path('api/verifyLogin', TokenVerifyView.as_view(), name='token_verify'),
+    # account
     path('api/createAccount', create_account, name='create_account'),
+    path('api/getAccount', get_account, name='get_account'),
+    path('api/updateAccount', update_account, name='update_account'),
+    path('api/deleteAccount', delete_account, name='delete_account'),
     # profile
     path('api/getProfile', get_profile, name='get_profile'),
     path('api/getMyProfile', get_my_profile, name='get_my_profile'),
     path('api/searchProfiles', search_profiles, name='search_profiles'),
     # streams
+    path('api/getStream', get_stream, name='get_stream'),
     path('api/getStreamsForProfile', get_streams_for_profile, name='get_streams_for_profile'),
+    path('api/createStream', create_stream, name='create_stream'),
+    path('api/updateStream', update_stream, name='update_stream'),
+    path('api/deleteStream', delete_stream, name='delete_stream'),
     # posts
-    # path('api/getPostsForStream', get_posts_for_stream, name='get_posts_for_stream'),
+    path('api/getPostsForStream', get_posts_for_stream, name='get_posts_for_stream'),
     path('api/getPostsForProfile', get_posts_for_profile, name='get_posts_for_profile'),
     # follows
     path('api/getFollowersForMe', get_followers_for_me, name='get_followers_for_me'),
@@ -74,6 +92,8 @@ urlpatterns = [
     path('api/unfollowProfile', unfollow_profile, name='unfollow_profile'),
     path('api/followProfile', follow_profile, name='follow_profile'),
     path('api/followStream', follow_stream, name='follow_stream'),
+    path('api/getFollowersForStream', get_followers_for_stream, name='get_followers_for_stream'),
+    path('api/getFollowingForStream', get_following_for_stream, name='get_following_for_stream'),
     # likes
     # path('api/likePost', like_post, name='like_post'),
     # path('api/unlikePost', unlike_post, name='unlike_post'),

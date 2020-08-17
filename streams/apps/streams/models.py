@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from streams.settings import AUTH_USER_MODEL
 from streams.apps.core.models import TimestampedModel
@@ -14,6 +15,7 @@ class Stream(TimestampedModel):
     For more info on ManyToManyField(through=),
     https://docs.djangoproject.com/en/3.0/ref/models/fields/#django.db.models.ManyToManyField.through
     """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     owner = models.ForeignKey('profiles.Profile', on_delete=models.CASCADE)
     name = models.CharField(max_length=25)
     is_private = models.BooleanField(default=True)

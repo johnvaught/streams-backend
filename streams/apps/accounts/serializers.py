@@ -12,7 +12,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token = super().get_token(user)
 
         # Add custom claims
-        token['authProfileId'] = user.profile.id
+        token['handle'] = user.handle
 
         return token
 
@@ -23,7 +23,7 @@ class MyTokenRefreshSerializer(TokenRefreshSerializer):
         token = super().get_token(user)
 
         # Add custom claims
-        token['authProfileId'] = user.profile.id
+        token['handle'] = user.handle
 
         return token
 
@@ -50,7 +50,6 @@ class AccountSerializer(serializers.ModelSerializer):
         profile = instance.profile
 
         password = validated_data.pop('password', None)
-
         for (key, value) in validated_data.items():
             setattr(instance, key, value)
 
@@ -58,10 +57,8 @@ class AccountSerializer(serializers.ModelSerializer):
             instance.set_password(password)
         instance.save()
 
-        profile.full_name = profile_data.get('full_name', profile.full_name)
-        profile.image = profile_data.get('image', profile.image)
-        profile.bio = profile_data.get('bio', profile.bio)
-
+        for (key, value) in profile_data.items():
+            setattr(profile, key, value)
         profile.save()
 
         return instance

@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.contrib.auth.validators import UnicodeHandleValidator
@@ -49,6 +50,7 @@ class AccountManager(BaseUserManager):
 class Account(AbstractBaseUser, PermissionsMixin, TimestampedModel):
     handle_validator = UnicodeHandleValidator()
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     handle = models.CharField(
         _('handle'),
         max_length=15,

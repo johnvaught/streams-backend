@@ -13,6 +13,107 @@ from streams.apps.follows.models import ProfileFollow, StreamFollow
 from streams.apps.follows.serializers import ProfileFollowSerializer
 from streams.apps.posts.models import Post
 from streams.apps.posts.serializers import PostSerializer
+from django.views.decorators.csrf import csrf_exempt
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def get_streams_for_profile(request):
+    handle = request.data.get('handle')
+    if not handle:
+        return Response({'details': {'required_fields': ['handle']}}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        profile = Profile.objects.get(account__handle=handle)
+    except Profile.DoesNotExist:
+        raise Http404
+
+    followed_streams = StreamFollow.objects.filter(profile=profile).values('stream')
+    all_streams = Stream.objects.filter(Q(owner=profile) | Q(pk__in=followed_streams))
+    streams_serializer = StreamSerializer(all_streams, many=True)
+
+    posts = {}
+    for stream in streams_serializer.data:
+        profile_ids = ProfileFollow.objects.filter(stream=stream['id']).values('profile')
+        stream_posts = Post.objects.filter(owner__in=profile_ids).order_by('-id')[:20]
+
+        paginator = PageNumberPagination()
+        paginator.page_size = 4
+        result_page = paginator.paginate_queryset(stream_posts, request)
+
+        post_serializer = PostSerializer(result_page, many=True)
+        posts[stream['id']] = post_serializer.data
+
+    data = {'streams': streams_serializer.data, 'posts': posts, 'profileId': profile.id}
+
+    return Response(data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def get_stream(request):
+    stream_id = request.data.get('streamId')
+    if not stream_id:
+        return Response({'details': {'required_fields': ['streamId']}}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        stream = Stream.objects.get(pk=stream_id)
+    except Stream.DoesNotExist:
+        raise Http404
+
+    serializer = StreamSerializer(stream)
+    return Response(serializer.data)
+
+
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_stream(request):
+    serializer_context = {'profile': request.user.profile}
+    serializer = StreamSerializer(data=request.data, context=serializer_context)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_stream(request):
+    stream_id = request.data.get('streamId')
+    if not stream_id:
+        return Response({'details': {'required_fields': ['streamId']}}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        stream = Stream.objects.get(pk=stream_id)
+    except Stream.DoesNotExist:
+        raise Http404
+
+    if stream.owner.id != request.user.profile.id:
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
+    serializer = StreamSerializer(stream, data=request.data, partial=True)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+
+    return Response(serializer.data)
+
+
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def delete_stream(request):
+    stream_id = request.data.get('streamId')
+    if not stream_id:
+        return Response({'details': {'required_fields': ['streamId']}}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        stream = Stream.objects.get(pk=stream_id)
+    except Stream.DoesNotExist:
+        raise Http404
+
+    if stream.owner.id is not request.user.profile.id:
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
+    stream.set_deleted()
+
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 # def get_streams_for_profile_helper(profile):
@@ -37,39 +138,6 @@ from streams.apps.posts.serializers import PostSerializer
 # def get_streams(request):
 #     data = get_streams_for_profile_helper(request.user.profile)
 #     return Response(data, status=status.HTTP_200_OK)
-
-
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def get_streams_for_profile(request):
-    profile_id = request.data.get('profileId')
-    if not profile_id:
-        return Response({'details': {'required_fields': ['profileId']}}, status=status.HTTP_400_BAD_REQUEST)
-    try:
-        profile = Profile.objects.get(pk=profile_id)
-    except Profile.DoesNotExist:
-        raise Http404
-
-    followed_streams = StreamFollow.objects.filter(profile=profile).values('stream')
-    all_streams = Stream.objects.filter(Q(owner=profile) | Q(pk__in=followed_streams))
-    streams_serializer = StreamSerializer(all_streams, many=True)
-
-    posts = {}
-    for stream in streams_serializer.data:
-        profile_ids = ProfileFollow.objects.filter(stream=stream['id']).values('profile')
-        stream_posts = Post.objects.filter(owner__in=profile_ids).order_by('-id')[:20]
-
-        paginator = PageNumberPagination()
-        paginator.page_size = 4
-        result_page = paginator.paginate_queryset(stream_posts, request)
-
-        post_serializer = PostSerializer(result_page, many=True)
-        posts[stream['id']] = post_serializer.data
-
-    data = {'streams': streams_serializer.data, 'posts': posts, 'profileId': profile.id}
-
-    return Response(data, status=status.HTTP_200_OK)
-
 
 # @api_view(['POST'])
 # @permission_classes([IsAuthenticated])

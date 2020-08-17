@@ -19,7 +19,6 @@ class PostSerializer(serializers.ModelSerializer):
         https://github.com/encode/django-rest-framework/issues/3533
         """
         # read_only_fields = ('handle', 'profile_image', 'is_private', 'created_at', 'updated_at')
-        # TODO: Read up on optional fields and how they relate to read_only.
         # optional_fields = ('account', 'handle', 'profile_image', 'is_private', 'created_at', 'updated_at')
 
     def get_profile_image(self, instance):

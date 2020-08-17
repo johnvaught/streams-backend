@@ -22,13 +22,15 @@ def get_my_profile(request):
 @permission_classes([AllowAny])
 def get_profile(request):
     try:
-        profile_id = request.data['profileId']
+        handle = request.data['handle']
     except KeyError:
-        return Response({'details': {'required fields': ['profileId']}}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'details': {'required fields': ['handle']}}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        profile = Profile.objects.get(pk=profile_id)
+        profile = Profile.objects.get(account__handle=handle)
     except Profile.DoesNotExist:
+        print('could not find profile')
+        print(handle)
         raise Http404()
 
     serializer = ProfileSerializer(profile)
@@ -46,7 +48,7 @@ def search_profiles(request):
     profiles = Profile.objects.filter(Q(account__handle__icontains=query) | Q(full_name__icontains=query))
 
     paginator = PageNumberPagination()
-    paginator.page_size = 3
+    paginator.page_size = 8
     result_page = paginator.paginate_queryset(profiles, request)
 
     serializer = ProfileSerializer(result_page, many=True)

@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from streams.apps.core.models import TimestampedModel
 from streams.settings import AUTH_USER_MODEL
@@ -13,6 +14,7 @@ class CommentManager(models.Manager):
 
 
 class Comment(TimestampedModel):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     owner = models.ForeignKey('profiles.Profile', on_delete=models.CASCADE)
     post = models.ForeignKey('posts.Post', related_name='comments', on_delete=models.CASCADE)
     parent = models.ForeignKey('self', related_name='children', on_delete=models.CASCADE, null=True, default=None)

@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from streams.apps.core.models import TimestampedModel
 from streams.settings import AUTH_USER_MODEL
@@ -11,6 +12,7 @@ class LikeManager(models.Manager):
 
 
 class Like(TimestampedModel):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     owner = models.ForeignKey('profiles.Profile', on_delete=models.CASCADE)
     post = models.ForeignKey('posts.Post', on_delete=models.CASCADE, null=True, db_index=True)
     comment = models.ForeignKey('comments.Comment', on_delete=models.CASCADE, null=True, db_index=True)

@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.db.models.constraints import UniqueConstraint
 from django.db.models import Q
@@ -11,14 +12,16 @@ from django.utils.translation import gettext_lazy as _
 class FollowManager(models.Manager):
     def get_queryset(self):
         """
-        Only query accounts and streams that have not been `deleted`.
+        Only query when accounts and streams that have not been `deleted`.
         """
         return super(FollowManager, self).get_queryset()\
             .select_related('profile', 'stream')\
-            .filter(profile__account__is_active=True, stream__owner__account__is_active=True, is_deleted=False)
+            .filter(profile__account__is_active=True, stream__owner__account__is_active=True,
+                    stream__is_deleted=False, is_deleted=False)
 
 
 class StreamFollow(TimestampedModel):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     profile = models.ForeignKey('profiles.Profile', on_delete=models.CASCADE)
     stream = models.ForeignKey('streams.Stream', on_delete=models.CASCADE)
 
@@ -60,6 +63,7 @@ class StreamFollow(TimestampedModel):
 
 
 class ProfileFollow(TimestampedModel):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     stream = models.ForeignKey('streams.Stream', on_delete=models.CASCADE)
     profile = models.ForeignKey('profiles.Profile', on_delete=models.CASCADE)
 

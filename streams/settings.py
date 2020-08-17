@@ -146,7 +146,7 @@ REST_FRAMEWORK = {
 # Simple JWT
 SIMPLE_JWT = {
     # TODO: MUST UPDATE LIFETIMES BEFORE DEPLOYMENT
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=5),
+    'ACCESS_TOKEN_LIFETIME': timedelta(seconds=4),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=120),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
@@ -167,7 +167,7 @@ SIMPLE_JWT = {
     'JTI_CLAIM': 'jti',
 
     'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
-    'SLIDING_TOKEN_LIFETIME': timedelta(days=5),
+    'SLIDING_TOKEN_LIFETIME': timedelta(seconds=15),
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=10),
 }
 
@@ -200,7 +200,7 @@ LOGGING = {
 
 # Streams
 AUTH_USER_MODEL = 'accounts.Account'
-DEFAULT_PROFILE_IMAGE = 'https://static.productionready.io/images/smiley-cyrus.jpg'
+DEFAULT_PROFILE_IMAGE = 'default.jpg'
 
 CORS_ORIGIN_ALLOW_ALL = False
 CORS_ORIGIN_WHITELIST = (

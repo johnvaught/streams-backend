@@ -8,6 +8,7 @@ class StreamSerializer(serializers.ModelSerializer):
     class Meta:
         model = Stream
         fields = ('id', 'owner', 'handle', 'name', 'is_private')
+        read_only_fields = ('id', 'owner')
         extra_kwargs = {
             'is_private': {'write_only': True},
         }

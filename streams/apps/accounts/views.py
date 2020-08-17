@@ -21,7 +21,6 @@ class MyTokenRefreshView(TokenRefreshView):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def create_account(request):
-    print(request.data)
     account_serializer = AccountSerializer(data=request.data)
     account_serializer.is_valid(raise_exception=True)
     account = account_serializer.save()
@@ -30,13 +29,43 @@ def create_account(request):
     # profile_serializer.is_valid(raise_exception=True)
     # profile_serializer.save()
 
+    # can't use these keys because i can't get simplejwt to attach
+    # the authProfileId on them
     refresh = RefreshToken.for_user(account)
-    response = {
+    data = {
         'refresh': str(refresh),
         'access': str(refresh.access_token),
-        'authProfileId': str(refresh.authProfileId),
+        'handle': account.handle,
     }
-    return Response(response, status=status.HTTP_201_CREATED)
+
+    return Response(data, status=status.HTTP_201_CREATED)
+
+
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def get_account(request):
+    serializer = AccountSerializer(request.user)
+    print(serializer.data)
+    return Response(serializer.data)
+
+
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_account(request):
+    serializer = AccountSerializer(request.user, data=request.data, partial=True)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    return Response(serializer.data)
+
+
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def delete_account(request):
+    request.user.set_inactive()
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 # @api_view(['POST'])

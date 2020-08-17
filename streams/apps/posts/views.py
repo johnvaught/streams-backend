@@ -1,31 +1,58 @@
 from django.http import Http404
+from django.core.exceptions import ValidationError
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import Response
 from rest_framework import status
 from .models import Post
 from .serializers import PostSerializer
-from rest_framework.pagination import PageNumberPagination
+from streams.apps.follows.models import ProfileFollow
+from streams.apps.streams.models import Stream
+from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
 
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def get_posts_for_profile(request):
     try:
-        profile_id = request.data['profileId']
+        handle = request.data['handle']
     except KeyError:
-        return Response({'details': {'required fields': ['account_id']}}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'details': {'required fields': ['handle']}}, status=status.HTTP_400_BAD_REQUEST)
 
-    posts = Post.objects.filter(owner=profile_id)
+    posts = Post.objects.filter(owner__account__handle=handle)
 
-    paginator = PageNumberPagination()
-    paginator.page_size = 12
+    paginator = LimitOffsetPagination()
+    paginator.default_limit = 14
     result_page = paginator.paginate_queryset(posts, request)
 
     serializer = PostSerializer(result_page, many=True)
     return paginator.get_paginated_response(serializer.data)
 
-#
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def get_posts_for_stream(request):
+    try:
+        stream_id = request.data['streamId']
+        stream = Stream.objects.get(pk=stream_id)
+    except KeyError:
+        return Response({'details': {'required fields': ['streamId']}}, status=status.HTTP_400_BAD_REQUEST)
+    except Stream.DoesNotExist:
+        raise Http404
+    except ValidationError:
+        return Response({'details': {'required field as UUID': ['streamId']}}, status=status.HTTP_400_BAD_REQUEST)
+
+    profiles = ProfileFollow.objects.filter(stream=stream.id).values('profile')
+    posts = Post.objects.filter(owner__in=profiles)
+
+    paginator = LimitOffsetPagination()
+    paginator.default_limit = 6
+    result_page = paginator.paginate_queryset(posts, request)
+
+    serializer = PostSerializer(result_page, many=True)
+    return paginator.get_paginated_response(serializer.data)
+
+
 # @api_view(['POST'])
 # @permission_classes([IsAuthenticated])
 # def create_post(request):
