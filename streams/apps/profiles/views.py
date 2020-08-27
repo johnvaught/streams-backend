@@ -6,7 +6,7 @@ from rest_framework.views import Response
 from rest_framework import status
 from .serializers import ProfileSerializer
 from .models import Profile
-from rest_framework.pagination import PageNumberPagination
+from rest_framework.pagination import LimitOffsetPagination
 from streams.apps.posts.models import Post
 from streams.apps.follows.models import ProfileFollow
 
@@ -47,23 +47,13 @@ def search_profiles(request):
 
     profiles = Profile.objects.filter(Q(account__handle__icontains=query) | Q(full_name__icontains=query))
 
-    paginator = PageNumberPagination()
-    paginator.page_size = 8
+    paginator = LimitOffsetPagination()
+    paginator.default_limit = 40
     result_page = paginator.paginate_queryset(profiles, request)
 
     serializer = ProfileSerializer(result_page, many=True)
     return paginator.get_paginated_response(serializer.data)
 
-    # return Response(serializer.data, status=status.HTTP_200_OK)
-
-    # posts = Post.objects.filter(owner=profile_id)
-    #
-    # paginator = PageNumberPagination()
-    # paginator.page_size = 12
-    # result_page = paginator.paginate_queryset(posts, request)
-    #
-    # serializer = PostSerializer(result_page, many=True)
-    # return paginator.get_paginated_response(serializer.data)
 
 # @api_view(['POST'])
 # @permission_classes([IsAuthenticated])
@@ -72,8 +62,8 @@ def search_profiles(request):
 #     serializer.is_valid(raise_exception=True)
 #     serializer.save()
 #     return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
-#
-#
+
+
 # @api_view(['GET'])
 # @permission_classes([AllowAny])
 # def read_public_profile(request, handle):

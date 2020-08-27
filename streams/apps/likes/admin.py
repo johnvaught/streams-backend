@@ -1,9 +1,9 @@
 from django.contrib import admin
-from .models import Like
+from .models import PostLike
 
 
-class LikeAdmin(admin.ModelAdmin):
-    model = Like
+class PostLikeAdmin(admin.ModelAdmin):
+    model = PostLike
 
 
-admin.site.register(Like, LikeAdmin)
+admin.site.register(PostLike, PostLikeAdmin)

@@ -46,15 +46,21 @@ from streams.apps.follows.views import (
 from streams.apps.likes.views import (
     like_post,
     unlike_post,
-    like_comment,
-    delete_all_likes,
-    get_post_likes_for_account,
-    get_comment_likes_for_account,
+    get_all_post_likes,
 )
 
 from streams.apps.posts.views import (
+    get_post,
     get_posts_for_stream,
     get_posts_for_profile,
+    get_explore,
+)
+
+from streams.apps.comments.views import (
+    create_post_comment,
+    get_comments_for_post,
+    get_new_comments_for_post,
+    get_new_comments_for_post_count,
 )
 
 urlpatterns = [
@@ -80,8 +86,10 @@ urlpatterns = [
     path('api/updateStream', update_stream, name='update_stream'),
     path('api/deleteStream', delete_stream, name='delete_stream'),
     # posts
+    path('api/getPost', get_post, name='get_post'),
     path('api/getPostsForStream', get_posts_for_stream, name='get_posts_for_stream'),
     path('api/getPostsForProfile', get_posts_for_profile, name='get_posts_for_profile'),
+    path('api/getExplore', get_explore, name='get_explore'),
     # follows
     path('api/getFollowersForMe', get_followers_for_me, name='get_followers_for_me'),
     path('api/getFollowingForMe', get_following_for_me, name='get_following_for_me'),
@@ -95,10 +103,12 @@ urlpatterns = [
     path('api/getFollowersForStream', get_followers_for_stream, name='get_followers_for_stream'),
     path('api/getFollowingForStream', get_following_for_stream, name='get_following_for_stream'),
     # likes
-    # path('api/likePost', like_post, name='like_post'),
-    # path('api/unlikePost', unlike_post, name='unlike_post'),
-    # path('api/likeComment', like_comment, name='like_comment'),
-    # path('api/deleteAllLikes', delete_all_likes, name='delete_all_likes'),
-    # path('api/getPostLikesForAccount', get_post_likes_for_account, name='get_post_likes_for_account'),
-    # path('api/getCommentLikesForAccount', get_comment_likes_for_account, name='get_comment_likes_for_account'),
+    path('api/likePost', like_post, name='like_post'),
+    path('api/unlikePost', unlike_post, name='unlike_post'),
+    path('api/getAllPostLikes', get_all_post_likes, name='get_all_post_likes'),
+    # comments
+    path('api/createPostComment', create_post_comment, name='create_post_comment'),
+    path('api/getCommentsForPost', get_comments_for_post, name='get_comments_for_post'),
+    path('api/getNewCommentsForPost', get_new_comments_for_post, name='get_new_comments_for_post'),
+    path('api/getNewCommentsForPostCount', get_new_comments_for_post_count, name='get_new_comments_for_post_count'),
 ]

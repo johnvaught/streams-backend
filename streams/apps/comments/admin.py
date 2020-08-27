@@ -1,9 +1,9 @@
 from django.contrib import admin
-from .models import Comment
+from .models import PostComment
 
 
-class CommentAdmin(admin.ModelAdmin):
-    model = Comment
+class PostCommentAdmin(admin.ModelAdmin):
+    model = PostComment
 
 
-admin.site.register(Comment, CommentAdmin)
+admin.site.register(PostComment, PostCommentAdmin)

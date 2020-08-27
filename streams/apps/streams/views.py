@@ -34,13 +34,13 @@ def get_streams_for_profile(request):
     posts = {}
     for stream in streams_serializer.data:
         profile_ids = ProfileFollow.objects.filter(stream=stream['id']).values('profile')
-        stream_posts = Post.objects.filter(owner__in=profile_ids).order_by('-id')[:20]
+        stream_posts = Post.objects.filter(owner__in=profile_ids)[:4]
 
-        paginator = PageNumberPagination()
-        paginator.page_size = 4
-        result_page = paginator.paginate_queryset(stream_posts, request)
+        # paginator = PageNumberPagination()
+        # paginator.page_size = 6
+        # result_page = paginator.paginate_queryset(stream_posts, request)
 
-        post_serializer = PostSerializer(result_page, many=True)
+        post_serializer = PostSerializer(stream_posts, many=True)
         posts[stream['id']] = post_serializer.data
 
     data = {'streams': streams_serializer.data, 'posts': posts, 'profileId': profile.id}
@@ -108,7 +108,7 @@ def delete_stream(request):
     except Stream.DoesNotExist:
         raise Http404
 
-    if stream.owner.id is not request.user.profile.id:
+    if stream.owner.id != request.user.profile.id:
         return Response(status=status.HTTP_403_FORBIDDEN)
 
     stream.set_deleted()

@@ -24,11 +24,12 @@ class ProfileSerializer(serializers.ModelSerializer):
     For more info on SerializedMethodField and get_<field_name>(self, obj)
     https://www.django-rest-framework.org/api-guide/fields/#serializermethodfield
     """
-    def get_image(self, obj):
+    @staticmethod
+    def get_image(obj):
         if obj.image:
             return obj.image
-
         return DEFAULT_PROFILE_IMAGE
 
-    def get_post_count(self, obj):
+    @staticmethod
+    def get_post_count(obj):
         return obj.posts.count()

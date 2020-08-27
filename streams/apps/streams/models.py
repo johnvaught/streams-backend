@@ -1,5 +1,6 @@
 import uuid
 from django.db import models
+from streams.apps.follows.models import StreamFollow, ProfileFollow
 from streams.settings import AUTH_USER_MODEL
 from streams.apps.core.models import TimestampedModel
 
@@ -27,6 +28,20 @@ class Stream(TimestampedModel):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+
+        if self.is_deleted:
+            # also set deleted all the profile follows and stream follows
+            profile_follows = ProfileFollow.objects.filter(stream=self.id)
+            for profile_follow in profile_follows:
+                profile_follow.set_deleted()
+
+            stream_follows = StreamFollow.objects.filter(stream=self.id)
+            for stream_follow in stream_follows:
+                stream_follow.set_deleted()
+
+        super(Stream, self).save(*args, **kwargs)
 
     def set_deleted(self):
         self.is_deleted = True

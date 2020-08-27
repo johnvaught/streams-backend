@@ -9,7 +9,7 @@ from django.db import IntegrityError
 from django.db.models import Q
 from .models import ProfileFollow, StreamFollow
 from .serializers import ProfileFollowSerializer, StreamFollowSerializer
-from rest_framework.pagination import PageNumberPagination
+from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
 
 from streams.apps.profiles.models import Profile
 from streams.apps.follows.models import ProfileFollow
@@ -30,8 +30,12 @@ def get_followers_for_profile_helper(handle, request):
     profiles = Profile.objects\
         .filter(Q(pk__in=profile_owners_of_streams_following) | Q(pk__in=profiles_following_streams_following)).distinct()
 
-    paginator = PageNumberPagination()
-    paginator.page_size = 20
+    # paginator = PageNumberPagination()
+    # paginator.page_size = 20
+    # result_page = paginator.paginate_queryset(profiles, request)
+
+    paginator = LimitOffsetPagination()
+    paginator.default_limit = 40
     result_page = paginator.paginate_queryset(profiles, request)
 
     serializer = ProfileSerializer(result_page, many=True)
@@ -66,8 +70,12 @@ def get_following_for_profile_helper(handle, request):
     profiles = Profile.objects\
         .filter(Q(pk__in=profiles_ids) | Q(pk__in=followed_stream_profiles_followed_ids)).distinct()
 
-    paginator = PageNumberPagination()
-    paginator.page_size = 3
+    # paginator = PageNumberPagination()
+    # paginator.page_size = 3
+    # result_page = paginator.paginate_queryset(profiles, request)
+
+    paginator = LimitOffsetPagination()
+    paginator.default_limit = 40
     result_page = paginator.paginate_queryset(profiles, request)
 
     serializer = ProfileSerializer(result_page, many=True)
@@ -232,8 +240,12 @@ def get_followers_for_stream(request):
     profile_ids = StreamFollow.objects.filter(stream=stream_id).values('profile')
     profiles = Profile.objects.filter(pk__in=profile_ids)
 
-    paginator = PageNumberPagination()
-    paginator.page_size = 20
+    # paginator = PageNumberPagination()
+    # paginator.page_size = 20
+    # result_page = paginator.paginate_queryset(profiles, request)
+
+    paginator = LimitOffsetPagination()
+    paginator.default_limit = 40
     result_page = paginator.paginate_queryset(profiles, request)
 
     serializer = ProfileSerializer(result_page, many=True)
@@ -250,8 +262,12 @@ def get_following_for_stream(request):
     profile_ids = ProfileFollow.objects.filter(stream=stream_id).values('profile')
     profiles = Profile.objects.filter(pk__in=profile_ids)
 
-    paginator = PageNumberPagination()
-    paginator.page_size = 20
+    # paginator = PageNumberPagination()
+    # paginator.page_size = 20
+    # result_page = paginator.paginate_queryset(profiles, request)
+
+    paginator = LimitOffsetPagination()
+    paginator.default_limit = 40
     result_page = paginator.paginate_queryset(profiles, request)
 
     serializer = ProfileSerializer(result_page, many=True)

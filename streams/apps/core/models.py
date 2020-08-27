@@ -8,7 +8,7 @@ class TimestampedModel(models.Model):
     created_at = models.DateTimeField(_('created at'), default=timezone.now)
 
     # A timestamp representing when this object was last updated.
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         abstract = True
@@ -16,4 +16,4 @@ class TimestampedModel(models.Model):
         # By default, any model that inherits from `TimestampedModel` should
         # be ordered in reverse-chronological order. We can override this on a
         # per-model basis as needed.
-        ordering = ['-created_at', '-updated_at']
+        ordering = ['-created_at']

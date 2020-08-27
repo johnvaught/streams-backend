@@ -52,11 +52,13 @@ class StreamFollow(TimestampedModel):
             raise Exception(_('You may not follow your own stream.'))
 
         if self.is_deleted:
-            self.stream.owner.cond_remove_from_follower_count_for_stream_follow(self)
+            # this should really be done with signaling, because these are class methods on
+            # Profile, but i can't import Profile here because i use Stream in Profile
+            self.profile.cond_remove_from_follower_count_for_stream_follow(self)
             self.profile.cond_remove_from_following_count_for_stream_follow(self)
 
         if not self.is_deleted:
-            self.stream.owner.cond_add_to_follower_count_for_stream_follow(self)
+            self.profile.cond_add_to_follower_count_for_stream_follow(self)
             self.profile.cond_add_to_following_count_for_stream_follow(self)
 
         super(StreamFollow, self).save(*args, **kwargs)
@@ -100,10 +102,11 @@ class ProfileFollow(TimestampedModel):
         if not self.is_deleted:
             self.stream.owner.cond_add_to_following_count(self.profile, self.stream)
             self.profile.cond_add_to_follower_count(self.stream.owner, self.stream)
-            # pass
 
         super(ProfileFollow, self).save(*args, **kwargs)
 
+    def create(self, *args, **kwargs):
+        pass
 
 # class Follow(TimestampedModel):
 #     followee = models.ForeignKey('profiles.Profile', on_delete=models.CASCADE, related_name='followee')
